@@ -55,18 +55,22 @@ vim.g.mapleader = " "
 vim.g.maplocalleader = " " -- 로컬 리더도 스페이스바로 설정할 때 (선택사항)
 vim.opt.laststatus = 3
 
-vim.keymap.set("n", ":", "q:A", { noremap = true, silent = true })
-vim.api.nvim_create_autocmd("CmdwinEnter", {
-    pattern = ":",
-    callback = function(args)
-        vim.cmd("resize 10")
-        vim.keymap.set("n", "<Esc", ":q<CR>", { buffer = true, silent = true })
-    end
-})
+
 -- vim.opt.winbar = "%= %f %m %="
 
 vim.opt.showtabline = 0
 
-
-
-require("plugins.explorer").setup()
+if vim.g.vscode then
+    -- VSCode extension
+else
+    vim.keymap.set("n", ":", "q:A", { noremap = true, silent = true })
+    vim.api.nvim_create_autocmd("CmdwinEnter", {
+        pattern = ":",
+        callback = function(args)
+            vim.cmd("resize 10")
+            vim.keymap.set("n", "<Esc", ":q<CR>", { buffer = true, silent = true })
+        end
+    })
+    require("plugins.explorer").setup()
+    -- ordinary Nvim
+end
