@@ -73,4 +73,56 @@ else
     })
     require("plugins.explorer").setup()
     -- ordinary Nvim
+    local buf
+    --[[
+vim.keymap.set('n', '<F9>', function()
+    buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_open_win(buf, true, {
+        relative = "editor",
+        width = 100,
+        height = 100,
+        row = 50,
+        col = 50,
+        style = "minimal",
+        border = "rounded"
+    })
+    vim.keymap.set('n', '<ESC>', function()
+        vim.api.nvim_buf_delete(buf, {
+            unload = true
+        })
+    end, {
+        buffer = buf
+    })
+end)
+
+
+
+vim.api.nvim_create_autocmd('BufWrite', {
+    pattern = '*',
+    callback = function(args)
+        vim.schedule(function()
+            local text = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+            local buff = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_open_win(buff, true, {
+                relative = "editor",
+                width = 100,
+                height = 50,
+                row = 50,
+                col = 50,
+                style = "minimal",
+                border = "rounded"
+            })
+            vim.api.nvim_buf_set_lines(buff, 0, -1, true, text)
+            vim.keymap.set('n', '<ESC>', function()
+                vim.api.nvim_buf_delete(buff, {
+                    unload = true
+                })
+            end, {
+                buffer = buff
+            }
+            )
+        end)
+    end
+})
+ ]]
 end
