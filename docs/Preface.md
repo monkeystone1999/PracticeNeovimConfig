@@ -1,5 +1,9 @@
 # Neovim 기본 설정 및 API 사용법
 
+## Text Objects & Motions
+- 고급 사용자를 위한 특수한 동작 모음
+- [examples](./TextObjectsMotion.md)
+
 ## Follow Tutorial
 
 
@@ -22,34 +26,22 @@
 ## Current Working Directory CWD
 - 
 
-keymaps 에 들어가는 F1234,,, 키들 그리고 Enter 나 Shift , Leader 에 대한 정보
-
-모든 autocmds 의 이벤트 종류
-
-
-?? list
-
-:bufdo command
-
-mark & jumps
-m{a-z} – Set mark (file-local)
-m{A-Z} – Global mark
-'{mark}, {mark} – Jump to line/position of mark
-Ctrl-o, Ctrl-i – Jump backward/forward in jump list
-'. , ., – Last change
-
-Text Objects & Motions
-ci(, di", yi] – Change/delete/yank inside delimiters
-va{, dap, cit – Select around braces/paragraph/tag
-diw, daw, dab, daB – Delete inside/around word/block/braces
-
-Macro 
+# 기본 명령어 변경
+## mark & jump
+- m{a-z} Set mark => ms{a-z}
+- m{A-Z} Set Global mark => ms{A-Z}
+- `{a-z && A-Z} Go Mark => mg{a-z && A-Z}
+## macro
+- q{a-z} record set => rs{a-z}
+- @{a-z} recprd play => rp{a-z}
 
 # neovim
+```lua
 workspace = {
     tcd : {{buffer_number : filename}, {buffer_number : filename}, ...},
     tcd 2 : {{buffer_number : filename}, {buffer_number : filename}, ...},
 }
+```
 
 # Tabline
 - 그저 tcd 정보만 품고 있음 절대 경로
