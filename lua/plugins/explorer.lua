@@ -36,7 +36,7 @@ local function set_buffer_name()
 end
 
 local function set_winbar_name()
-    return "5#WarningMsg# " .. vim.fn.getcwd(0, 0) .. " %*"
+    return vim.fn.getcwd(0, 0)
 end
 
 

@@ -54,11 +54,14 @@ vim.opt.wildmenu = true   -- 커맨드라인 자동완성 메뉴 활성화
 vim.g.mapleader = " "
 vim.g.maplocalleader = " " -- 로컬 리더도 스페이스바로 설정할 때 (선택사항)
 vim.opt.laststatus = 3
+vim.opt.wildoptions = "pum"
 
 
 -- vim.opt.winbar = "%= %f %m %="
 
 vim.opt.showtabline = 0
+vim.keymap.set("n", "q:", "<Nop>")
+
 
 if vim.g.vscode then
     -- VSCode extension
@@ -68,13 +71,15 @@ else
         pattern = ":",
         callback = function(args)
             vim.cmd("resize 10")
-            vim.keymap.set("n", "<Esc", ":q<CR>", { buffer = true, silent = true })
+            vim.keymap.set("i", "<Esc>", "<Esc>:q<CR>", { buffer = true, silent = true })
         end
     })
     require("plugins.explorer").setup()
-    -- ordinary Nvim
-    local buf
-    --[[
+    require("plugins.base").setup()
+end
+-- ordinary Nvim
+local buf
+--[[
 vim.keymap.set('n', '<F9>', function()
     buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_open_win(buf, true, {
@@ -125,4 +130,3 @@ vim.api.nvim_create_autocmd('BufWrite', {
     end
 })
  ]]
-end
