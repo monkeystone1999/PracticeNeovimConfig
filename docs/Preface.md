@@ -102,6 +102,33 @@ workspace = {
 - <leader\>wq : close window
 - <leader\>waq : all close window
 
+- <Ctrl\> ---> F13
+- <leader\>w ---> Super (F14)
+- <Fn_Tab\> ---> F15 (Tab Page)
+- <Fn_q\> ---> F16 (Close all without unsaved file)
+- <Fn_e\> ---> Macro {<Esc\>:e } (Editing new file)
+- <Fn_r\> ---> Macro {<Esc\>:restart} (Reload Nvim)
+- <Fn_t\> ---> F16 (TabPage)
+- <Fn_s\> ---> F17 (symbol search)
+- <Fn_d\> ---> F19 (Debug)
+- <Fn_f\> ---> F20 (fzf)
+- <Fn_g\> ---> F21 (git)
+- <Fn_c\> ---> F22 (Cmake)
+
+- <Super\>{h,j,k,l} : move window
+- <Super\>n : next window
+- <Super\>p : previous window
+- <Super\>q : close window
+- <Super\>sv : split the window vertical
+- <Super\>sh : split the window horizon
+- <Super\>aq : all close window
+- <Super\>- : reduce size
+- <Super\>= : increase size
+- <Super\><Ctrl\>{h,j,k,l} : move window to other window area
+- <Super\>tt : floating terminal
+- <Super\>tT : global terminal
+- <Super\>tl : terminal list
+
 ## tabpage & terminal
 
 - <leader\>ta : add tabpage
@@ -129,3 +156,8 @@ workspace = {
 - <leader\>fg : Find string in files
 - <leader\>fb : find open buffers
 - <leader\>fh : find help tags
+
+# Browsing Keyboard base
+
+- <Fn_/\> : Find
+- <>
