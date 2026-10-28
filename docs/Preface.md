@@ -70,7 +70,6 @@ workspace = {
 - vim.opt.cmdheight = 0         -- 하단 명령줄 창의 높이 (0으로 설정 시 평소엔 숨김 가능)
 - floating window 를 사용하여 noice.nvim 과 유사하게 사용
 - 명령어 자동 완성이 필요함
--
 
 # netrw
 

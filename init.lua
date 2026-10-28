@@ -61,11 +61,41 @@ vim.opt.wildoptions = "pum"
 
 vim.opt.showtabline = 0
 vim.keymap.set("n", "q:", "<Nop>")
+vim.api.nvim_create_user_command("W", function()
+    vim.cmd("w")
+end, {})
+
 
 
 if vim.g.vscode then
     -- VSCode extension
 else
+    if vim.g.neovide then
+        -- 폰트 설정 (설치된 폰트명과 크기 지정)
+        vim.o.guifont = "JetBrainsMono Nerd Font:h11,D2Coding:h11"
+
+        -- 창 투명도 및 블러 (0.0 ~ 1.0)
+        vim.g.neovide_transparency = 0.95
+        vim.g.neovide_scroll_animation_length = 0.3
+
+        -- 커서 애니메이션 설정
+        vim.g.neovide_cursor_animation_length = 0.13 -- 이동 속도 (0이면 애니메이션 비활성화)
+        vim.g.neovide_cursor_trail_size = 0.8        -- 잔상 길이 (0.0 ~ 1.0)
+        vim.g.neovide_cursor_vfx_mode =
+        "railgun"                                    -- 효과: "railgun", "torpedo", "pixiedust", "sonicboom", "ripple", "wireframe"
+
+        -- Windows 창 외관 및 동작
+        vim.g.neovide_corner_preference = "round"   -- 모서리 둥글기 ("round", "square")
+        vim.g.neovide_hide_mouse_when_typing = true -- 타이핑 시 마우스 커서 숨김
+        vim.g.neovide_remember_window_size = true   -- 이전 창 크기 기억
+        vim.g.neovide_confirm_quit = true           -- 종료 확인 프롬프트
+
+        -- 입력 및 클립보드 (Ctrl+Shift+V / Ctrl+Shift+C 붙여넣기/복사)
+        vim.keymap.set('n', '<C-S-v>', '"+P')
+        vim.keymap.set('i', '<C-S-v>', '<C-r>+')
+        vim.keymap.set('v', '<C-S-c>', '"+y')
+    end
+
     vim.keymap.set("n", ":", "q:A", { noremap = true, silent = true })
     vim.api.nvim_create_autocmd("CmdwinEnter", {
         pattern = ":",
@@ -74,8 +104,26 @@ else
             vim.keymap.set("i", "<Esc>", "<Esc>:q<CR>", { buffer = true, silent = true })
         end
     })
-    require("plugins.explorer").setup()
-    require("plugins.base").setup()
+
+    vim.api.nvim_create_autocmd('VimEnter', {
+        group = vim.api.nvim_create_augroup("LayoutControl", { clear = true }),
+        pattern = '*',
+        callback = function()
+            local arg = vim.fn.argv(0)
+            if not arg or arg == "" then return end
+
+            local path = vim.fn.fnamemodify(arg, ":p")
+            pcall(vim.cmd, "tcd " .. vim.fn.fnameescape(path))
+
+            if vim.fn.isdirectory(path) == 1 then
+                local empty_buf = vim.api.nvim_create_buf(true, false)
+                vim.api.nvim_win_set_buf(0, empty_buf)
+            end
+        end
+    })
+
+    -- require("plugins.newtr").setup()
+    -- require("plugins.base").setup()
 end
 -- ordinary Nvim
 local buf
