@@ -110,14 +110,14 @@ function M.go(i)
     end
 end
 
-function M.cycle(setp)
+function M.cycle(step)
     local bufs = M.buffers()
     if #bufs == 0 then return end
     local cur, idex = vim.api.nvim_get_current_buf(), 0
     for i, b in ipairs(bufs) do
         if b == cur then idex = i end
     end
-    vim.api.nvim_set_current_buf(bufs[(idx - 1 + step) % #bufs + 1])
+    vim.api.nvim_set_current_buf(bufs[(idex - 1 + step) % #bufs + 1])
 end
 
 --- 현재 Workspace 에서 buffer 를 닫는다. 다른 Workspace 가 쓰고 있으면 buffer 자체는 유지.
@@ -145,7 +145,7 @@ end
 
 function M.setup()
     vim.o.showtabline = 0 -- tabline 대신 floating 목록 + winbar 사용
-    tcd(vim.fn.getcwd()) -- 시작 tab 도 고유 위치를 가지도록 고정
+    tcd(vim.fn.getcwd())  -- 시작 tab 도 고유 위치를 가지도록 고정
 
     local group = vim.api.nvim_create_augroup("workspace", { clear = true })
     local function au(ev, cb)
