@@ -38,6 +38,7 @@
 - m{a-z} Set mark => ms{a-z}
 - m{A-Z} Set Global mark => ms{A-Z}
 - `{a-z && A-Z} Go Mark => mg{a-z && A-Z}
+- mark 와 jump 를 toggle 형식으로?
 
 ## macro
 
