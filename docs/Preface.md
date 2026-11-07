@@ -86,6 +86,8 @@ workspace = {
 
 ## netrw
 
+- 오래된 Vimscript 로 작성이 되어서 lua api 와 잦은 충돌로 인해 Off
+
 - <leader\>e : toggle base open netrw
 - <leader\>cw : workspace change (change current locate tcd)
 - a : add new file or directory

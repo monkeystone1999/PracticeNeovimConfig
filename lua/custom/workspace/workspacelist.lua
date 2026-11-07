@@ -3,7 +3,7 @@ local Entry = require("custom.bases.entry")
 
 local workspaces = {}
 local dir_path = vim.fn.stdpath("data") .. "/WorkspaceList"
-local file_path = dir_path .. "WorkspaceList.json"
+local file_path = dir_path .. "/WorkspaceList.json"
 local sessions_dir = dir_path .. "/sessions"
 
 local function get_session(session_name)
