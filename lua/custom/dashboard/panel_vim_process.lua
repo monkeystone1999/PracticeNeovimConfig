@@ -1,5 +1,5 @@
 local M = {}
-local api = require("custom.dashboard.find_vim_process")
+local vim_processes = require("custom.dashboard.find_vim_process")
 
 local panel = {
     title = "Vim/Nvim Processes",
@@ -12,7 +12,7 @@ local buffer
 
 
 function M.setup()
-    api.setup()
+    vim_processes.setup()
     buffer = vim.api.nvim_create_buf(false, true)
     vim.bo[buffer].buftype = "nofile"
     --[[     vim.bo[buffer].modified = true
@@ -21,13 +21,13 @@ function M.setup()
 end
 
 function M.get_content()
-    local procs = api.get_info()
+    local procs = vim_processes.get_info()
     if #procs == 0 then
         panel.content = "현재 감지된 다른 Vim/Nvim 프로세스가 없습니다 "
     else
         panel.content = procs
     end
-    return panel
+    return { panel.content }
 end
 
 function M.get_panel(row, col, width, height)
