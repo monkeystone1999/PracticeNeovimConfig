@@ -7,6 +7,7 @@ local buf = vim.api.nvim_create_buf(false, true)
 local function Layout()
 
 end
+
 function M.setup()
     vim.api.nvim_create_autocmd("VimEnter", {
         callback = function(data)
