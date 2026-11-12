@@ -67,5 +67,6 @@ else
         checker = { enabled = true },
     })
     require("custom.workspace.workspace_buffer").setup()
+    require("custom.dashboard.dashboard").setup()
     -- require("custom.netrw").setup()
 end

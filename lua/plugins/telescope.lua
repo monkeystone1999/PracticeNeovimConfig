@@ -1,8 +1,11 @@
 return {
     "nvim-telescope/telescope.nvim",
-    tag = "0.1.8",               -- 또는 branch = '0.1.x'
     dependencies = {
         "nvim-lua/plenary.nvim", -- 필수 의존성 플러그인
+        {
+            "nvim-telescope/telescope-fzf-native.nvim",
+            build = "make",
+        },
     },
     config = function()
         local builtin = require("telescope.builtin")
@@ -23,6 +26,9 @@ return {
                         ["<C-j>"] = "move_selection_next",     -- Ctrl+j 로 아래 이동
                         ["<C-k>"] = "move_selection_previous", -- Ctrl+k 로 위 이동
                         ["<C-c>"] = "close",                   -- Ctrl+c 로 창 닫기
+                    },
+                    n = {
+                        ["q"] = "close",                       -- 노멀 모드에서 q 로 창 닫기
                     },
                 },
             },

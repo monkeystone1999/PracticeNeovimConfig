@@ -21,6 +21,7 @@ return {
             "markdown",
             "c",
             "cpp",
+            "cmake",
         })
 
         -- 파일 열릴 때 Treesitter 하이라이팅 및 들여쓰기 활성화

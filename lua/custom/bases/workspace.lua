@@ -35,12 +35,13 @@ end
 local function get_session(session_name)
     return sessions_dir .. "/" .. session_name .. ".vim"
 end
+
 local function load_workspace_session(ws_name, target_path)
     local session_file = get_session(ws_name)
 
     pcall(vim.cmd.tcd, target_path)
     if vim.fn.filereadable(session_file) == 1 then
-        vim.cmd("silent! %db!")
+        vim.cmd("silent! %bdelete!")
         vim.cmd("silent! source " .. vim.fn.fnameescape(session_file))
     else
         print(" Switched to directory: " .. target_path)
@@ -67,6 +68,7 @@ local function save_workspace_list()
     file:close()
     return true
 end
+
 local function ensure_dir()
     if vim.fn.isdirectory(dir_path) == 0 then
         vim.fn.mkdir(dir_path, "p")
@@ -112,6 +114,8 @@ end
 -- ws_cwd 는 절대경로여야함
 function M.add(ws_name, ws_cwd)
     if not ws_name or ws_name == "" then return end
+    if not ws_cwd or ws_cwd == "" then return end
+    ws_cwd = etr.normalize(ws_cwd)
     -- 중복 제거
     if workspaces[ws_name] then return false, "name exists" end
 
@@ -119,10 +123,13 @@ function M.add(ws_name, ws_cwd)
         if cwd == ws_cwd then
             workspaces[ws] = nil
             workspaces[ws_name] = ws_cwd
-            return nil
+            save_workspace_list()
+            return true
         end
     end
     workspaces[ws_name] = ws_cwd
+    save_workspace_list()
+    return true
 end
 
 function M.save_current(ws_name)
@@ -133,8 +140,10 @@ function M.save_current(ws_name)
 
     if existing and existing ~= ws_name then return false, "path exists", existing end
     workspaces[ws_name] = cwd
+    save_workspace_list()
     vim.cmd("silent! mksession! " .. vim.fn.fnameescape(get_session(ws_name)))
     M.current_workspace = ws_name
+    return true
 end
 
 function M.rename(old_name, new_name)
@@ -143,8 +152,10 @@ function M.rename(old_name, new_name)
     if old_name == new_name then
         return
     end
+    if not workspaces[old_name] then return false, "not found" end
     workspaces[new_name] = workspaces[old_name]
     workspaces[old_name] = nil
+    save_workspace_list()
     local old_s, new_s = get_session(old_name), get_session(new_name)
     if vim.fn.filereadable(old_s) == 1 then
         vim.fn.rename(old_s, new_s)
@@ -152,14 +163,18 @@ function M.rename(old_name, new_name)
     if M.current_workspace == old_name then
         M.current_workspace = new_name
     end
-    return nil
+    return true
 end
 
 function M.delete(ws_name)
     if not ws_name or ws_name == "" then return end
     if not workspaces[ws_name] then return false, "not found" end
     workspaces[ws_name] = nil
-    vim.fn.delete(get_session(ws_name))
+    save_workspace_list()
+    local session_file = get_session(ws_name)
+    if vim.fn.filereadable(session_file) == 1 then
+        vim.fn.delete(session_file)
+    end
     if M.current_workspace == ws_name then
         M.current_workspace = nil
     end
@@ -170,16 +185,16 @@ function M.load(ws_name)
     if not ws_name or ws_name == "" then return end
     local cwd = workspaces[ws_name]
     if not cwd then return false end
-    load_workspace_session(workspaces[ws_name])
+    load_workspace_session(ws_name, cwd)
     M.current_workspace = ws_name
     return true
 end
 
 function M.save_load(target_name)
-    local session_file = get_session(M.current_workspace)
-    vim.cmd("silent! mksession! " .. vim.fn.fnameescape(session_file))
-    M.load(target_name)
-    return nil
+    if M.current_workspace and M.current_workspace ~= "" then
+        M.save_snapshot(M.current_workspace)
+    end
+    return M.load(target_name)
 end
 
 function M.get_list()

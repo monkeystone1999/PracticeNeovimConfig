@@ -16,6 +16,7 @@ end
 
 function M.setup()
     require("custom.bases.entry").setup()
+    require("custom.bases.highlights").setup()
     require("custom.bases.lualine").setup()
     require("custom.bases.winbar").setup()
     require("custom.bases.workspace").setup()

@@ -2,7 +2,6 @@ local M = {}
 
 local wc = require("custom.bases.workspace")
 
-
 local function get_win_opts()
     local width = math.floor(vim.o.columns * 0.5)
     local height = math.floor(vim.o.lines * 0.4)
@@ -19,17 +18,16 @@ local function get_win_opts()
         title = "Workspace List",
         title_pos = "center",
         footer = "s:Save Current, a:Add, d:Delete, r:Rename, Enter:Select",
-        footer_pos = "center"
+        footer_pos = "center",
     }
 end
-
 
 local buf = nil
 local win = nil
 
 function M.setup()
     buf = vim.api.nvim_create_buf(false, true)
-    vim.bo[buf].bufhidden = 'hide'
+    vim.bo[buf].bufhidden = "hide"
     vim.bo[buf].filetype = "workspace_list"
 
     local list_view = {}
@@ -38,10 +36,10 @@ function M.setup()
         local lines = {}
         local current_cwd = vim.fn.getcwd(0)
 
-        for name, path in pairs(wc.get_list()) do
-            table.insert(list_view, name)
-            local is_active = (path == current_cwd) and " *(active)*" or ""
-            table.insert(lines, string.format(" • %-15s : %s%s", name, path, is_active))
+        for _, item in ipairs(wc.get_list()) do
+            table.insert(list_view, item.name)
+            local is_active = (item.path == current_cwd) and " *(active)*" or ""
+            table.insert(lines, string.format(" • %-15s : %s%s", item.name, item.path, is_active))
         end
         if #lines == 0 then
             lines = { " (등록된 워크스페이스가 없습니다. 's' 를 눌러 현재 상태를 저장하세요)" }
@@ -51,32 +49,26 @@ function M.setup()
         vim.bo[buf].modifiable = false
     end
     render()
-    vim.keymap.set("n", "a", function()
-        local default_name = vim.env.HOME
 
-        vim.ui.input({ prompt = "New Name : ", default = default_name }, function(cwd)
-            vim.ui.input({ prompt = "New Workspace : " }, function(ws_name)
+    vim.keymap.set("n", "a", function()
+        local default_path = vim.fn.getcwd(0)
+        vim.ui.input({ prompt = "Workspace Path : ", default = default_path }, function(cwd)
+            if not cwd or cwd == "" then return end
+            vim.ui.input({ prompt = "Workspace Name : " }, function(ws_name)
+                if not ws_name or ws_name == "" then return end
                 wc.add(ws_name, cwd)
+                render()
             end)
-        end
-        )
-    end, { buffer = buf })
+        end)
+    end, { buffer = buf, silent = true })
 
     vim.keymap.set("n", "<CR>", function()
-        local cursor_row = vim.api.nvim_win_get_cursor(win)[1] -- [1] ?
+        if not win or not vim.api.nvim_win_is_valid(win) then return end
+        local cursor_row = vim.api.nvim_win_get_cursor(win)[1]
         local key = list_view[cursor_row]
-        if key and list_view[key] then
-            local path = list_view[key]
-            if vim.api.nvim_win_is_valid(win) then
-                vim.api.nvim_win_close(win, true)
-            end
-
-            if wc.current_workspace and wc.current_workspace ~= "" then
-                wc.save_snapshot(wc.current_workspace)
-            end
-
-            wc.load_session(cursor_row)
-            M.current_workspace = key
+        if key then
+            vim.api.nvim_win_close(win, true)
+            wc.save_load(key)
         end
     end, { buffer = buf, silent = true })
 
@@ -85,19 +77,22 @@ function M.setup()
         vim.ui.input({ prompt = "Snapshot Name : ", default = default_name }, function(ws_name)
             if not ws_name or ws_name == "" then return end
             wc.save_current(ws_name)
-            M.current_workspace = ws_name
             render()
         end)
     end, { buffer = buf, silent = true })
+
     vim.keymap.set("n", "d", function()
+        if not win or not vim.api.nvim_win_is_valid(win) then return end
         local cursor_row = vim.api.nvim_win_get_cursor(win)[1]
         local key = list_view[cursor_row]
         if key then
-            wc.delete(cursor_row)
+            wc.delete(key)
             render()
         end
     end, { buffer = buf, silent = true })
+
     vim.keymap.set("n", "r", function()
+        if not win or not vim.api.nvim_win_is_valid(win) then return end
         local cursor_row = vim.api.nvim_win_get_cursor(win)[1]
         local old_name = list_view[cursor_row]
         if old_name then
@@ -108,8 +103,9 @@ function M.setup()
             end)
         end
     end, { buffer = buf, silent = true })
+
     local function close_win()
-        if vim.api.nvim_win_is_valid(win) then
+        if win and vim.api.nvim_win_is_valid(win) then
             vim.api.nvim_win_close(win, true)
         end
     end
@@ -117,6 +113,7 @@ function M.setup()
     vim.keymap.set("n", "q", close_win, { buffer = buf, silent = true })
     vim.keymap.set("n", "<Esc>", close_win, { buffer = buf, silent = true })
     vim.keymap.set("n", "<leader>ws", function()
+        render()
         win = vim.api.nvim_open_win(buf, true, get_win_opts())
     end, { desc = "Open Workspace List" })
 end
