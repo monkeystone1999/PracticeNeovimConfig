@@ -56,7 +56,10 @@ local function get_base_win()
     return nil
 end
 
+local is_closing_wins = false
+
 local function close_active_wins()
+    is_closing_wins = true
     for _, win in ipairs(active_wins) do
         if vim.api.nvim_win_is_valid(win) then
             vim.api.nvim_win_close(win, true)
@@ -64,6 +67,7 @@ local function close_active_wins()
     end
     active_wins = {}
     win_panel_buf = {}
+    is_closing_wins = false
 end
 
 local function close_dashboard()
@@ -139,6 +143,15 @@ local function bind_panel_keymaps(buf)
 
     -- HalfScreen 우측 패널 토글 ('t')
     vim.keymap.set("n", "t", toggle_half_panel, opts)
+
+    -- 모든 대시보드 패널에서 <Esc>로 대시보드 닫기 (QuarterScreen 서브 패널에서는 Project 패널로 복귀)
+    vim.keymap.set("n", "<Esc>", function()
+        if current_size == "quarter_screen" and buf ~= project_panel.get_buf() then
+            quarter_screen()
+        else
+            close_dashboard()
+        end
+    end, opts)
 
     -- QuarterScreen에서 서브 패널(vim/workspace) 열었을 때 'q' 또는 '<BS>'로 Project 패널 복귀/종료
     if buf ~= project_panel.get_buf() then
@@ -415,6 +428,23 @@ function M.setup()
                     pcall(vim.api.nvim_win_set_cursor, base_win, cursor)
                 end
             end)
+        end,
+    })
+
+    -- 사용자가 대시보드 창 중 하나에서 :q 로 창을 닫았을 때 나머지 대시보드 창들도 함께 일괄 정리
+    vim.api.nvim_create_autocmd("WinClosed", {
+        callback = function(ev)
+            if is_closing_wins or #active_wins == 0 then
+                return
+            end
+            local closed_win = tonumber(ev.match)
+            if closed_win and is_active_dashboard_win(closed_win) then
+                vim.schedule(function()
+                    if #active_wins > 0 then
+                        close_dashboard()
+                    end
+                end)
+            end
         end,
     })
 

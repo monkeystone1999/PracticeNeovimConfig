@@ -22,6 +22,8 @@ return {
             ["<C-t>"] = "actions.select_tab",
             ["<C-p>"] = "actions.preview",
             ["<C-c>"] = "actions.close",
+            ["q"] = { "actions.close", mode = "n" },
+            ["<Esc>"] = { "actions.close", mode = "n" },
             ["<C-l>"] = "actions.refresh",
             ["-"] = "actions.parent",
             ["_"] = "actions.open_cwd",

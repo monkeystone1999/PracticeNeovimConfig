@@ -19,6 +19,7 @@ return {
             "css",
             "json",
             "markdown",
+            "markdown_inline",
             "c",
             "cpp",
             "cmake",

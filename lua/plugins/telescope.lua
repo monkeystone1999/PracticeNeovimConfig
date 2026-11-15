@@ -16,6 +16,8 @@ return {
         vim.keymap.set("n", "<leader>fb", builtin.buffers, { desc = "Find buffers (열린 버퍼 목록)" })
         vim.keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "Find help (Neovim 도움말 검색)" })
         vim.keymap.set("n", "<leader>fr", builtin.oldfiles, { desc = "Find recent files (최근 연 파일)" })
+        vim.keymap.set("n", "<leader>fc", builtin.commands, { desc = "Find commands (명령어 팔레트 검색)" })
+        vim.keymap.set("n", "<leader>:", builtin.commands, { desc = "Command Palette (명령어 팔레트)" })
 
         -- UI 및 동작 기본 설정
         require("telescope").setup({

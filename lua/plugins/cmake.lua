@@ -18,6 +18,10 @@ return {
                 min_height = 12,
                 max_height = 20,
                 default_detail = 1,
+                bindings = {
+                    ["q"] = "Close",
+                    ["<Esc>"] = "Close",
+                },
             },
         },
     },

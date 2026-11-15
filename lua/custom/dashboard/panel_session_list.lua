@@ -61,13 +61,46 @@ local function bind_keymaps()
     -- a: 새 워크스페이스 경로 및 이름 등록
     vim.keymap.set("n", "a", function()
         local default_path = vim.fn.getcwd(0)
-        vim.ui.input({ prompt = "Workspace Path : ", default = default_path }, function(cwd)
+        vim.ui.input({ prompt = "Workspace Path : ", default = default_path, completion = "dir" }, function(cwd)
             if not cwd or cwd == "" then return end
             vim.ui.input({ prompt = "Workspace Name : " }, function(ws_name)
                 if not ws_name or ws_name == "" then return end
                 workspace.add(ws_name, cwd)
                 M.refresh()
             end)
+        end)
+    end, opts)
+
+    -- c: 현재 탭의 작업 디렉터리(tcd) 변경 (<Tab> 디렉터리 자동완성 지원)
+    vim.keymap.set("n", "c", function()
+        local default_path = vim.fn.getcwd(0)
+        vim.ui.input({ prompt = "Change tcd Path : ", default = default_path, completion = "dir" }, function(new_path)
+            if not new_path or new_path == "" then return end
+            if workspace.set_tcd(new_path) then
+                M.refresh()
+            end
+        end)
+    end, opts)
+
+    -- C (Shift+c): 커서가 위치한 워크스페이스의 등록 경로(Location) 변경 및 tcd 전환
+    vim.keymap.set("n", "C", function()
+        local cursor_row = vim.api.nvim_win_get_cursor(0)[1]
+        local key = list_view[cursor_row]
+        if not key then return end
+
+        local current_path = vim.fn.getcwd(0)
+        for _, item in ipairs(workspace.get_list()) do
+            if item.name == key then
+                current_path = item.path
+                break
+            end
+        end
+
+        vim.ui.input({ prompt = "Relocate '" .. key .. "' Path : ", default = current_path, completion = "dir" }, function(new_path)
+            if not new_path or new_path == "" then return end
+            if workspace.relocate(key, new_path) then
+                M.refresh()
+            end
         end)
     end, opts)
 
@@ -123,7 +156,7 @@ function M.get_panel(row, col, width, height)
         border = "rounded",
         title = panel.title,
         title_pos = "center",
-        footer = " s:Save, a:Add, d:Delete, r:Rename, Enter:Select ",
+        footer = " s:Save, a:Add, c:tcd, C:Relocate, d:Delete, r:Rename, Enter:Select ",
         footer_pos = "center",
     }
     return { win_config, buffer }

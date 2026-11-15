@@ -152,6 +152,28 @@ return {
             dap.listeners.before.event_exited.dapui_config = function()
                 dapui.close()
             end
+
+            -- 4. DAP UI 분할 창에서 q 또는 <Esc> 입력 시 전체 DAP UI 레이아웃을 한 번에 닫기
+            vim.api.nvim_create_autocmd("FileType", {
+                group = vim.api.nvim_create_augroup("DapUiCloseKeymaps", { clear = true }),
+                pattern = {
+                    "dapui_scopes",
+                    "dapui_breakpoints",
+                    "dapui_stacks",
+                    "dapui_watches",
+                    "dapui_console",
+                    "dap-repl",
+                },
+                callback = function(ev)
+                    local opts = { buffer = ev.buf, silent = true, nowait = true, desc = "Close DAP UI" }
+                    vim.keymap.set("n", "q", function()
+                        dapui.close()
+                    end, opts)
+                    vim.keymap.set("n", "<Esc>", function()
+                        dapui.close()
+                    end, opts)
+                end,
+            })
         end,
     },
 }

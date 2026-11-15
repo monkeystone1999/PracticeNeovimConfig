@@ -17,7 +17,7 @@ local function get_win_opts()
         border = "rounded",
         title = "Workspace List",
         title_pos = "center",
-        footer = "s:Save Current, a:Add, d:Delete, r:Rename, Enter:Select",
+        footer = "s:Save, a:Add, c:tcd, C:Relocate, d:Delete, r:Rename, Enter:Select",
         footer_pos = "center",
     }
 end
@@ -52,13 +52,47 @@ function M.setup()
 
     vim.keymap.set("n", "a", function()
         local default_path = vim.fn.getcwd(0)
-        vim.ui.input({ prompt = "Workspace Path : ", default = default_path }, function(cwd)
+        vim.ui.input({ prompt = "Workspace Path : ", default = default_path, completion = "dir" }, function(cwd)
             if not cwd or cwd == "" then return end
             vim.ui.input({ prompt = "Workspace Name : " }, function(ws_name)
                 if not ws_name or ws_name == "" then return end
                 wc.add(ws_name, cwd)
                 render()
             end)
+        end)
+    end, { buffer = buf, silent = true })
+
+    -- c: 현재 탭의 작업 디렉터리(tcd) 변경 (열린 버퍼 유지, <Tab> 디렉터리 자동완성 지원)
+    vim.keymap.set("n", "c", function()
+        local default_path = vim.fn.getcwd(0)
+        vim.ui.input({ prompt = "Change tcd Path : ", default = default_path, completion = "dir" }, function(new_path)
+            if not new_path or new_path == "" then return end
+            if wc.set_tcd(new_path) then
+                render()
+            end
+        end)
+    end, { buffer = buf, silent = true })
+
+    -- C (Shift+c): 커서가 위치한 워크스페이스의 등록 경로(Location) 변경 및 해당 경로로 tcd 전환
+    vim.keymap.set("n", "C", function()
+        if not win or not vim.api.nvim_win_is_valid(win) then return end
+        local cursor_row = vim.api.nvim_win_get_cursor(win)[1]
+        local key = list_view[cursor_row]
+        if not key then return end
+
+        local current_path = vim.fn.getcwd(0)
+        for _, item in ipairs(wc.get_list()) do
+            if item.name == key then
+                current_path = item.path
+                break
+            end
+        end
+
+        vim.ui.input({ prompt = "Relocate '" .. key .. "' Path : ", default = current_path, completion = "dir" }, function(new_path)
+            if not new_path or new_path == "" then return end
+            if wc.relocate(key, new_path) then
+                render()
+            end
         end)
     end, { buffer = buf, silent = true })
 
