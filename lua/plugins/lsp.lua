@@ -1,53 +1,109 @@
+
 return {
+    -- Mason: LSP 서버 바이너리 설치 및 관리
     {
-        "williamboman/mason.nvim",
-        config = function()
-            require("mason").setup({
-                ui = {
-                    icons = {
-                        package_installed = "✓",
-                        package_pending = "➜",
-                        package_uninstalled = "✗",
-                    },
+        "mason-org/mason.nvim",
+        opts = {
+            ui = {
+                icons = {
+                    package_installed = "✓",
+                    package_pending = "➜",
+                    package_uninstalled = "✗",
                 },
-            })
-        end,
+            },
+        },
     },
+
+    -- clangd 확장 기능
     {
         "p00f/clangd_extensions.nvim",
-        lazy = true,
+        ft = { "c", "cpp", "objc", "objcpp" },
+        opts = {
+            ast = {
+                role_icons = {
+                    type = "",
+                    declaration = "",
+                    expression = "",
+                    specifier = "",
+                    statement = "",
+                    ["template argument"] = "",
+                },
+            },
+        },
+    },
+
+    -- Neovim Native LSP 설정 데이터
+    {
+        "neovim/nvim-lspconfig",
+    },
+
+    -- Mason과 Native LSP 연결
+    {
+        "mason-org/mason-lspconfig.nvim",
+        dependencies = {
+            "mason-org/mason.nvim",
+            "neovim/nvim-lspconfig",
+            "p00f/clangd_extensions.nvim",
+            "saghen/blink.cmp",
+        },
         config = function()
-            require("clangd_extensions").setup({
-                ast = {
-                    role_icons = {
-                        type = "",
-                        declaration = "",
-                        expression = "",
-                        specifier = "",
-                        statement = "",
-                        ["template argument"] = "",
+            local capabilities = require("blink.cmp").get_lsp_capabilities()
+
+            -- 모든 LSP 서버에 Blink completion capabilities 적용
+            vim.lsp.config("*", {
+                capabilities = capabilities,
+            })
+
+            -- Lua Language Server
+            vim.lsp.config("lua_ls", {
+                settings = {
+                    Lua = {
+                        diagnostics = {
+                            globals = { "vim" },
+                        },
+                        workspace = {
+                            checkThirdParty = false,
+                        },
+                        telemetry = {
+                            enable = false,
+                        },
                     },
                 },
             })
-        end,
-    },
-    {
-        "williamboman/mason-lspconfig.nvim",
-        dependencies = {
-            "williamboman/mason.nvim",
-            "neovim/nvim-lspconfig",
-            "p00f/clangd_extensions.nvim",
-        },
-        config = function()
-            local lspconfig = require("lspconfig")
-            local mason_lspconfig = require("mason-lspconfig")
 
-            -- 1. LSP 연결 시 공통 및 언어별 단축키 설정
+            -- C / C++ Language Server
+            vim.lsp.config("clangd", {
+                cmd = {
+                    "clangd",
+                    "--background-index",
+                    "--clang-tidy",
+                    "--header-insertion=iwyu",
+                    "--completion-style=detailed",
+                    "--function-arg-placeholders",
+                    "--fallback-style=llvm",
+                },
+                init_options = {
+                    usePlaceholders = true,
+                    completeUnimported = true,
+                    clangdFileStatus = true,
+                },
+                capabilities = require("blink.cmp").get_lsp_capabilities({
+                    offsetEncoding = { "utf-16" },
+                }),
+            })
+
+            -- LSP Attach 단축키
             vim.api.nvim_create_autocmd("LspAttach", {
-                group = vim.api.nvim_create_augroup("UserLspConfig", { clear = true }),
+                group = vim.api.nvim_create_augroup("UserLspConfig", {
+                    clear = true,
+                }),
                 callback = function(ev)
-                    local opts = { buffer = ev.buf, silent = true }
+                    local opts = {
+                        buffer = ev.buf,
+                        silent = true,
+                    }
 
+                    -- Navigation
                     opts.desc = "Go to definition"
                     vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
 
@@ -57,104 +113,81 @@ return {
                     opts.desc = "Hover documentation"
                     vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
 
+                    opts.desc = "Go to references"
+                    vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
+
+                    -- Refactoring
                     opts.desc = "Rename symbol"
                     vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
 
                     opts.desc = "Code action"
                     vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
 
-                    opts.desc = "Go to references"
-                    vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
-
+                    -- Diagnostics
                     opts.desc = "Show line diagnostics"
                     vim.keymap.set("n", "<leader>d", vim.diagnostic.open_float, opts)
 
-                    -- Inlay Hints 토글 (Neovim 0.10+)
-                    if vim.lsp.inlay_hint then
-                        opts.desc = "Toggle Inlay Hints"
-                        vim.keymap.set("n", "<leader>th", function()
-                            vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = ev.buf }), { bufnr = ev.buf })
-                        end, opts)
-                    end
+                    -- Inlay Hints
+                    opts.desc = "Toggle Inlay Hints"
+                    vim.keymap.set("n", "<leader>th", function()
+                        local enabled = vim.lsp.inlay_hint.is_enabled({
+                            bufnr = ev.buf,
+                        })
 
-                    -- clangd 연결 시 C/C++ 전용 단축키 바인딩
+                        vim.lsp.inlay_hint.enable(not enabled, {
+                            bufnr = ev.buf,
+                        })
+                    end, opts)
+
+                    -- clangd-specific mappings
                     local client = vim.lsp.get_client_by_id(ev.data.client_id)
-                    if client and client.name == "clangd" then
-                        pcall(require, "clangd_extensions")
 
+                    if client and client.name == "clangd" then
                         opts.desc = "Switch Source/Header (C/C++)"
-                        vim.keymap.set("n", "<leader>ch", "<cmd>ClangdSwitchSourceHeader<cr>", opts)
+                        vim.keymap.set(
+                            "n",
+                            "<leader>ch",
+                            "<cmd>ClangdSwitchSourceHeader<cr>",
+                            opts
+                        )
 
                         opts.desc = "Show AST (C/C++)"
-                        vim.keymap.set("n", "<leader>cA", "<cmd>ClangdAST<cr>", opts)
+                        vim.keymap.set(
+                            "n",
+                            "<leader>cA",
+                            "<cmd>ClangdAST<cr>",
+                            opts
+                        )
 
                         opts.desc = "Symbol Info (C/C++)"
-                        vim.keymap.set("n", "<leader>ci", "<cmd>ClangdSymbolInfo<cr>", opts)
+                        vim.keymap.set(
+                            "n",
+                            "<leader>ci",
+                            "<cmd>ClangdSymbolInfo<cr>",
+                            opts
+                        )
 
                         opts.desc = "Type Hierarchy (C/C++)"
-                        vim.keymap.set("n", "<leader>cth", "<cmd>ClangdTypeHierarchy<cr>", opts)
+                        vim.keymap.set(
+                            "n",
+                            "<leader>cth",
+                            "<cmd>ClangdTypeHierarchy<cr>",
+                            opts
+                        )
                     end
                 end,
             })
 
-            -- 2. mason-lspconfig setup (lua_ls, clangd, neocmake 자동 설치 및 핸들러 등록)
-            mason_lspconfig.setup({
+            -- Mason LSP integration
+            require("mason-lspconfig").setup({
                 ensure_installed = {
                     "lua_ls",
                     "clangd",
                     "neocmake",
                 },
-                automatic_installation = true,
-                handlers = {
-                    -- 기본 핸들러: 설치된 일반 LSP 서버(neocmake 등) 자동 적용
-                    function(server_name)
-                        lspconfig[server_name].setup({})
-                    end,
-
-                    -- lua_ls 전용 커스텀 옵션
-                    ["lua_ls"] = function()
-                        lspconfig.lua_ls.setup({
-                            settings = {
-                                Lua = {
-                                    diagnostics = {
-                                        globals = { "vim" },
-                                    },
-                                    workspace = {
-                                        checkThirdParty = false,
-                                    },
-                                    telemetry = { enable = false },
-                                },
-                            },
-                        })
-                    end,
-
-                    -- clangd 전용 C/C++ 커스텀 옵션
-                    ["clangd"] = function()
-                        lspconfig.clangd.setup({
-                            cmd = {
-                                "clangd",
-                                "--background-index",
-                                "--clang-tidy",
-                                "--header-insertion=iwyu",
-                                "--completion-style=detailed",
-                                "--function-arg-placeholders",
-                                "--fallback-style=llvm",
-                            },
-                            init_options = {
-                                usePlaceholders = true,
-                                completeUnimported = true,
-                                clangdFileStatus = true,
-                            },
-                            capabilities = {
-                                offsetEncoding = { "utf-16" },
-                            },
-                        })
-                    end,
-                },
+                automatic_enable = true,
             })
         end,
     },
-    {
-        "neovim/nvim-lspconfig",
-    },
 }
+

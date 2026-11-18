@@ -1,32 +1,113 @@
+
 return {
     {
         "folke/lazydev.nvim",
-        ft = "lua", -- only load on lua files
+        ft = "lua",
         opts = {
             library = {
-                -- See the configuration section for more details
-                -- Load luvit types when the `vim.uv` word is found
                 { path = "${3rd}/luv/library", words = { "vim%.uv" } },
             },
         },
     },
-    { -- optional blink completion source for require statements and module annotations
+
+    {
         "saghen/blink.cmp",
         version = "1.*",
+        dependencies = {
+            "saghen/blink.lib",
+        },
+        build = function()
+            require("blink.cmp").build():pwait()
+        end,
         opts = {
+            keymap = {
+                preset = "none",
+
+                -- Completion / Snippet navigation
+                ["<Tab>"] = {
+                    "select_next",
+                    "snippet_forward",
+                    "fallback",
+                },
+
+                ["<S-Tab>"] = {
+                    "select_prev",
+                    "snippet_backward",
+                    "fallback",
+                },
+
+                -- Accept completion
+                ["<CR>"] = {
+                    "accept",
+                    "fallback",
+                },
+
+                -- Completion menu
+                ["<C-Space>"] = {
+                    "show",
+                    "show_documentation",
+                    "hide_documentation",
+                },
+
+                ["<C-e>"] = {
+                    "hide",
+                    "fallback",
+                },
+
+                -- Navigation
+                ["<Up>"] = {
+                    "select_prev",
+                    "fallback",
+                },
+
+                ["<Down>"] = {
+                    "select_next",
+                    "fallback",
+                },
+
+                ["<C-p>"] = {
+                    "select_prev",
+                    "fallback_to_mappings",
+                },
+
+                ["<C-n>"] = {
+                    "select_next",
+                    "fallback_to_mappings",
+                },
+
+                -- Signature help
+                ["<C-k>"] = {
+                    "show_signature",
+                    "hide_signature",
+                    "fallback",
+                },
+            },
+
+            completion = {
+                list = {
+                    selection = {
+                        preselect = false,
+                    },
+                },
+            },
+
             sources = {
-                -- add lazydev to your completion providers
-                default = { "lazydev", "lsp", "path", "snippets", "buffer" },
+                default = {
+                    "lazydev",
+                    "lsp",
+                    "path",
+                    "snippets",
+                    "buffer",
+                },
                 providers = {
                     lazydev = {
                         name = "LazyDev",
                         module = "lazydev.integrations.blink",
-                        -- make lazydev completions top priority (see `:h blink.cmp`)
                         score_offset = 100,
                     },
                 },
             },
         },
-    }
-    -- { "folke/neodev.nvim", enabled = false }, -- make sure to uninstall or disable neodev.nvim
+    },
 }
+

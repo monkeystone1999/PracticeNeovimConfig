@@ -20,6 +20,8 @@ function M.setup()
     require("custom.bases.lualine").setup()
     require("custom.bases.winbar").setup()
     require("custom.bases.workspace").setup()
+    require("custom.buffer")
+
 end
 
 return M

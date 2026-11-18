@@ -60,6 +60,26 @@ vim.opt.wildoptions = "pum"
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 
+local hl_groups = { "Normal", "NormalNC", "SignColumn", "EndOfBuffer", "MsgArea" }
+for _, name in ipairs(hl_groups) do
+  vim.api.nvim_set_hl(0, name, { bg = "NONE", ctermbg = "NONE" })
+end
+
+-- 윈도우 복사 설정 
+if vim.fn.has("wsl") == 1 then
+    vim.g.clipboard = {
+        name = "WslClipboard",
+        copy = {
+            ["+"] = "clip.exe",
+            ["*"] = "clip.exe",
+        },
+        paste = {
+            ["+"] = "powershell.exe -NoProfile -Command Get-Clipboard",
+            ["*"] = "powershell.exe -NoProfile -Command Get-Clipboard",
+        },
+        cache_enabled = 0,
+    }
+end
 
 -- vim.opt.winbar = "%= %f %m %="
 

@@ -50,8 +50,8 @@ local function bind_term_keymaps(buf)
 end
 
 -- force_new_or_cwd:
---   false (<leader>tt) : 기존 플로팅 터미널 버퍼 재사용 (토글 동작, 작업 디렉터리 유지)
---   true  (<leader>tT) : 현재 파일이 위치한 디렉터리 기준으로 새 터미널 세션 열기
+--   false (<leader>tT) : 기존 플로팅 터미널 버퍼 재사용 (토글 동작, 작업 디렉터리 유지)
+--   true  (<leader>tt) : 현재 파일이 위치한 디렉터리 기준으로 새 터미널 세션 열기
 local function open_float_term(use_current_file_dir)
     -- 이미 창이 열려 있으면 닫기(토글)
     if float_term.win and vim.api.nvim_win_is_valid(float_term.win) then
@@ -80,7 +80,10 @@ local function open_float_term(use_current_file_dir)
     float_term.win = vim.api.nvim_open_win(float_term.buf, true, get_float_term_config())
 
     if need_new_term then
-        vim.fn.termopen(vim.o.shell, { cwd = target_dir })
+        vim.fn.jobstart(vim.o.shell, {
+            term = true,
+            cwd = target_dir,
+        })
         bind_term_keymaps(float_term.buf)
     end
 
@@ -97,15 +100,15 @@ vim.api.nvim_create_autocmd("VimResized", {
     end,
 })
 
--- <leader>tt : 기존 플로팅 터미널 토글 (작업 상태 유지, 현재 cwd 기준)
-vim.keymap.set({ "n", "t" }, "<leader>tt", function()
-    open_float_term(false)
-end, { silent = true, desc = "Floating Terminal 토글 (CWD)" })
-
--- <leader>tT : 현재 열린 파일의 폴더 경로에서 새 플로팅 터미널 열기
+-- <leader>tT : 기존 플로팅 터미널 토글 (작업 상태 유지, 현재 cwd 기준)
 vim.keymap.set({ "n", "t" }, "<leader>tT", function()
+    open_float_term(false)
+end, { silent = true, desc = "Floating Terminal 토글" })
+
+-- <leader>tt : 현재 열린 파일의 폴더 경로에서 새 플로팅 터미널 열기
+vim.keymap.set({ "n", "t" }, "<leader>tt", function()
     open_float_term(true)
-end, { silent = true, desc = "Floating Terminal 새로 열기 (현재 파일 경로)" })
+end, { silent = true, desc = "Floating Terminal 새로 열기" })
 
 -- ==========================================================================
 -- 읽기 전용 / 보조 유틸리티 창에서 q 및 <Esc> 로 즉시 닫기
