@@ -1,0 +1,6 @@
+[user]
+    name = monkeystone1999
+    email = monkeystone1999@gmail.com
+
+[core]
+    sshCommand = ssh -i ~/.ssh/github -o IdentitiesOnly=yes
