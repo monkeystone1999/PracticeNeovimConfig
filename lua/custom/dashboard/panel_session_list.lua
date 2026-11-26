@@ -20,15 +20,13 @@ end
 function M.get_content()
     list_view = {}
     local ws_list = workspace.get_list()
-    local current_cwd = vim.fn.getcwd(0)
-
     if #ws_list == 0 then
         panel.content = { " (등록된 Workspace가 없습니다. 's' 저장 / 'a' 추가)" }
     else
         local lines = {}
         for _, item in ipairs(ws_list) do
             table.insert(list_view, item.name)
-            local is_active = (item.path == current_cwd) and " *(active)*" or ""
+            local is_active = workspace.is_cwd(item.path) and " *(active)*" or ""
             table.insert(lines, string.format(" • %-15s : %s%s", item.name, item.path, is_active))
         end
         panel.content = lines
@@ -118,7 +116,7 @@ local function bind_keymaps()
     vim.keymap.set("n", "d", function()
         local cursor_row = vim.api.nvim_win_get_cursor(0)[1]
         local key = list_view[cursor_row]
-        if key then
+        if key and vim.fn.confirm(string.format("Delete workspace '%s' and its session?", key), "&Yes\n&No", 2) == 1 then
             workspace.delete(key)
             M.refresh()
         end

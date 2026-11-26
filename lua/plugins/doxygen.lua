@@ -43,6 +43,20 @@ return {
                     annotation_convention = "doxygen",
                 },
             },
+            lua = {
+                template = {
+        -- Lua 파일에서 기본으로 사용할 주석 컨벤션을 'doxygen'으로 지정
+        annotation_convention = "doxygen",
+
+        -- 커스텀 doxygen 템플릿 정의
+        doxygen = {
+          { nil, "--! @brief $1", { no_results = true, type = { "func", "class" } } },
+          { nil, "--! @brief $1", { type = { "func", "class" } } },
+          { "parameters", "--! @param %s $1", { type = { "func" } } },
+          { "return_statement", "--! @return $1", { type = { "func" } } },
+        },
+      },
+            },
         },
     },
 }

@@ -34,11 +34,9 @@ function M.setup()
     local function render()
         list_view = {}
         local lines = {}
-        local current_cwd = vim.fn.getcwd(0)
-
         for _, item in ipairs(wc.get_list()) do
             table.insert(list_view, item.name)
-            local is_active = (item.path == current_cwd) and " *(active)*" or ""
+            local is_active = wc.is_cwd(item.path) and " *(active)*" or ""
             table.insert(lines, string.format(" • %-15s : %s%s", item.name, item.path, is_active))
         end
         if #lines == 0 then
@@ -119,7 +117,7 @@ function M.setup()
         if not win or not vim.api.nvim_win_is_valid(win) then return end
         local cursor_row = vim.api.nvim_win_get_cursor(win)[1]
         local key = list_view[cursor_row]
-        if key then
+        if key and vim.fn.confirm(string.format("Delete workspace '%s' and its session?", key), "&Yes\n&No", 2) == 1 then
             wc.delete(key)
             render()
         end
@@ -148,6 +146,10 @@ function M.setup()
     vim.keymap.set("n", "<Esc>", close_win, { buffer = buf, silent = true })
     vim.keymap.set("n", "<leader>ws", function()
         render()
+        if win and vim.api.nvim_win_is_valid(win) then
+            vim.api.nvim_set_current_win(win)
+            return
+        end
         win = vim.api.nvim_open_win(buf, true, get_win_opts())
     end, { desc = "Open Workspace List" })
 end

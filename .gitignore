@@ -1,1 +1,3 @@
-./gitconfig
+.gitconfig
+.stylua.toml
+lazy-lock.json

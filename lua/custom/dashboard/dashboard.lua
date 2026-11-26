@@ -454,11 +454,13 @@ function M.setup()
             if entry_typ == "empty" then
                 M.open()
             elseif entry_typ == "dir" and path then
-                -- nvim . 등 디렉터리 지정 시작 시: 해당 경로로 이동( 및 등록된 워크스페이스 연동) 후 대시보드 유지
+                -- nvim . 등 디렉터리 지정 시작 시: 해당 경로로 이동 후 대시보드 유지
+                -- 등록된 워크스페이스라면 세션까지 로드해야 current_workspace 로 추적한다.
+                -- (세션 로드 없이 추적하면 종료 시 빈 상태가 기존 세션을 덮어씀)
                 pcall(vim.cmd.tcd, path)
                 local matched_ws = workspace.find_by_path(path)
                 if matched_ws then
-                    workspace.current_workspace = matched_ws
+                    workspace.load(matched_ws)
                 end
                 vim.schedule(function()
                     M.open()

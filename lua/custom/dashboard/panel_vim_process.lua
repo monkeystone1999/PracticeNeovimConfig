@@ -77,7 +77,18 @@ local function takeover_background_process(proc)
     end
 
     if session_saved then
-        vim.cmd("silent! %bdelete!")
+        local ws = require("custom.bases.workspace")
+        -- 현재 워크스페이스 상태를 먼저 저장하고, 가져온 상태는 어떤 워크스페이스에도 속하지 않으므로 추적 해제
+        if ws.current_workspace then
+            ws.save_snapshot(ws.current_workspace)
+        end
+        -- 저장 안 된 버퍼가 있으면 버리지 않고 임시 세션 파일을 남겨 둔다
+        if not ws.clear_buffers() then
+            vim.notify("가져온 세션은 다음 파일에 보존되었습니다: " .. temp_session, vim.log.levels.WARN,
+                { title = "Vim/Nvim Processes" })
+            return
+        end
+        ws.current_workspace = nil
         vim.cmd("silent! source " .. vim.fn.fnameescape(temp_session))
         vim.fn.delete(temp_session)
     end
