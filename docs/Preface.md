@@ -1,165 +1,81 @@
-# Neovim 기본 설정 및 API 사용법
+# Neovim 문서 목차 및 설계 노트
 
-## Text Objects & Motions
+## 1. 실사용 & 플러그인 구조 문서
 
-- 고급 사용자를 위한 특수한 동작 모음
-- [examples](./TextObjectsMotion.md)
+- **전체 사용법 및 단축키 가이드**: [Usage.md](./Usage.md)
+- **플러그인 아키텍처 및 의존성 원리**: [Plugins.md](./Plugins.md)
+- **텍스트 오브젝트 & 모션 정리**: [TextObjectsMotion.md](./TextObjectsMotion.md)
 
-## Follow Tutorial
+## 2. Neovim 기본 설정 및 Lua API 레퍼런스
 
-## 설정 변수 Options 제어
+- **설정 변수 (`vim.opt`) 제어**: [Options.md](./Options.md)
+- **키 매핑 (`vim.keymap.set`)**: [Keymaps.md](./Keymaps.md)
+- **이벤트 구독 (`nvim_create_autocmd`)**: [Autocmds.md](./Autocmds.md)
+- **버퍼 생성 및 관리 (`nvim_create_buf`)**: [Buffers.md](./Buffers.md)
 
-- vim.opt 를 사용하여 기본 동작을 제어
-- [examples](./Options.md)
+---
 
-## 키 매핑 Keymaps
+## 3. 현재 구현된 자체 아키텍처 요약 (`lua/custom/`)
 
-- vim.keymap.set 함수를 통해 사용자의 키보드 입력을 Lua 함수로 라우팅
-- [examples](./Keymaps.md)
+초기에 구상했던 핵심 아이디어들이 현재 아래와 같이 구현되어 동작하고 있습니다.
 
-## 이벤트 구독 Autocmds
+- **탭(`tcd`) 기반 워크스페이스 & 세션** ([`lua/custom/bases/workspace.lua`](../lua/custom/bases/workspace.lua), [`workspace_buffer.lua`](../lua/custom/workspace/workspace_buffer.lua))
+  - 워크스페이스별 경로(`WorkspaceList.json`)와 세션 스냅샷(`sessions/*.vim`)을 분리 저장하며, 전환 시 미저장 버퍼 보호 및 `tcd` 강제 동기화를 수행합니다.
+  - 등록된 모든 워크스페이스는 자동으로 `obsidian.nvim` 볼트(`README.md` + `docs/`)와 `harpoon` 핀 목록의 키(`vim.fn.getcwd(0)`)로 연동됩니다.
+- **반응형 대시보드** ([`lua/custom/dashboard/dashboard.lua`](../lua/custom/dashboard/dashboard.lua))
+  - 창 너비에 따라 Full(`>=160`) / Half(`80~159`) / Quarter(`<80`) 모드로 전환되며, 백그라운드 Vim/Neovim 프로세스의 세션을 RPC 소켓을 통해 현재 창으로 가져오는(Takeover) 기능을 포함합니다.
+- **상단 Winbar / 하단 Statusline / 탐색기**
+  - `showtabline = 0`으로 탭라인을 숨기고, 상단 문맥은 `dropbar.nvim`, 하단 전역 상태바(`laststatus = 3`)는 `lualine.nvim`(활성 워크스페이스, 매크로 녹화 `@reg`, 활성 LSP 표시)이 담당합니다.
+  - 구형 `netrw`는 비활성화하고 `oil.nvim` 플로팅 탐색기(`<leader>e`)로 대체했습니다.
 
-- vim.api.nvim_create_autocmd 를 사용해서 특정 이벤트를 감지하여 동작을 실행시키는 Callback 형식
-- [examples](./Autocmds.md)
+---
 
-## 버퍼
+## 4. 초기 구상 및 향후 실험 아이디어 메모
 
-- vim.api.nvim_*_buf 를 사용해 버퍼 활용
-- [examples](./Buffers.md)
+> 아래 내용은 초기 설계 스케치 및 추후 키보드 레이아웃/매크로 커스터마이징 실험을 위해 남겨둔 개인 아이디어 노트입니다.
 
-## Current Working Directory CWD
+### 기본 명령어 리매핑 아이디어
 
--
+#### mark & jump
+- `m{a-z}` Set mark => `ms{a-z}`
+- `m{A-Z}` Set Global mark => `ms{A-Z}`
+- `` `{a-z && A-Z} `` Go Mark => `mg{a-z && A-Z}`
+- mark 와 jump 를 toggle 형식으로 구성 검토
 
-# 기본 명령어 변경
+#### macro
+- `q{a-z}` record set => `rs{a-z}`
+- `@{a-z}` record play => `rp{a-z}`
 
-## mark & jump
-
-- m{a-z} Set mark => ms{a-z}
-- m{A-Z} Set Global mark => ms{A-Z}
-- `{a-z && A-Z} Go Mark => mg{a-z && A-Z}
-- mark 와 jump 를 toggle 형식으로?
-
-## macro
-
-- q{a-z} record set => rs{a-z}
-- @{a-z} recprd play => rp{a-z}
-
-# neovim
+### 워크스페이스 데이터 구조 스케치
 
 ```lua
 workspace = {
-    tcd : {{buffer_number : filename}, {buffer_number : filename}, ...},
-    tcd 2 : {{buffer_number : filename}, {buffer_number : filename}, ...},
+    tcd = { { buffer_number = filename }, { buffer_number = filename } },
+    tcd_2 = { { buffer_number = filename }, { buffer_number = filename } },
 }
 ```
 
-# Tabline
+### cmdline 구상
+- `vim.opt.cmdheight = 0` — 하단 명령줄 창의 높이를 0으로 두어 평소엔 숨김
+- 추후 floating window 기반 cmdline UI(`noice.nvim` 또는 Neovim 내장 extui) 검토
 
-- 그저 tcd 정보만 품고 있음 절대 경로
+### 하드웨어 레이어(F13~F22 / Super) 및 창 제어 구상
 
-# winbar
+- `<Ctrl>` ---> `F13`
+- `<leader>w` ---> `Super` (`F14`)
+- `<Fn_Tab>` ---> `F15` (Tab Page)
+- `<Fn_q>` ---> `F16` (Close all without unsaved file)
+- `<Fn_e>` ---> Macro `{<Esc>:e }` (Editing new file)
+- `<Fn_r>` ---> Macro `{<Esc>:restart}` (Reload Nvim)
+- `<Fn_s>` ---> `F17` (Symbol search)
+- `<Fn_d>` ---> `F19` (Debug)
+- `<Fn_f>` ---> `F20` (Fzf)
+- `<Fn_g>` ---> `F21` (Git)
+- `<Fn_c>` ---> `F22` (CMake)
 
-- filename 만 표현 Tabpage 마다 표현하는 buffer 들이 달라야함 하지만 하나의 buffer 를 2개 이상의 Tabpage 에서 사용을 한다면 그것도 가능해야함
-
-# statusbar
-
-- 전체 내용의 몇 % 에 위치해있는지 현재 mode 만 표시
-
-# cmdline
-
-- vim.opt.cmdheight = 0         -- 하단 명령줄 창의 높이 (0으로 설정 시 평소엔 숨김 가능)
-- floating window 를 사용하여 noice.nvim 과 유사하게 사용
-- 명령어 자동 완성이 필요함
-
-# netrw
-
-- Tabline 으로부터 buffername 을 받음 해당 tcd 의 절대경로를 buffername 으로 지정
-
-# which-key like
-
-- keymap.set 에 있는 opt 의 desc 의 내용을 다 끌어오기
-
-# keymap
-
-- 모든 동작은 <leader\> 를 베이스로 움직임
-
-## netrw
-
-- 오래된 Vimscript 로 작성이 되어서 lua api 와 잦은 충돌로 인해 Off
-
-- <leader\>e : toggle base open netrw
-- <leader\>cw : workspace change (change current locate tcd)
-- a : add new file or directory
-- d : delete file or directory
-- r : set current directory the highnest locate
-
-## window
-
-- <leader\>wsv : split the window vertical
-- <leader\>wsh : split the window horizon
-- <leader\>w{h,j,k,l} : move window
-- <leader\>wn : next window
-- <leader\>wp : previous window
-- <leader\>wq : close window
-- <leader\>waq : all close window
-
-- <Ctrl\> ---> F13
-- <leader\>w ---> Super (F14)
-- <Fn_Tab\> ---> F15 (Tab Page)
-- <Fn_q\> ---> F16 (Close all without unsaved file)
-- <Fn_e\> ---> Macro {<Esc\>:e } (Editing new file)
-- <Fn_r\> ---> Macro {<Esc\>:restart} (Reload Nvim)
-- <Fn_t\> ---> F16 (TabPage)
-- <Fn_s\> ---> F17 (symbol search)
-- <Fn_d\> ---> F19 (Debug)
-- <Fn_f\> ---> F20 (fzf)
-- <Fn_g\> ---> F21 (git)
-- <Fn_c\> ---> F22 (Cmake)
-
-- <Super\>{h,j,k,l} : move window
-- <Super\>n : next window
-- <Super\>p : previous window
-- <Super\>q : close window
-- <Super\>sv : split the window vertical
-- <Super\>sh : split the window horizon
-- <Super\>aq : all close window
-- <Super\>- : reduce size
-- <Super\>= : increase size
-- <Super\><Ctrl\>{h,j,k,l} : move window to other window area
-- <Super\>tt : floating terminal
-- <Super\>tT : global terminal
-- <Super\>tl : terminal list
-
-## tabpage & terminal
-
-- <leader\>ta : add tabpage
-- <leader\>tc : close tabpage
-- <leader\>tac : all close tabpage
-- <leader\>tn : next tabpage
-- <leader\>tp : previous tabpage
-- <leader\>tt : toggle terminal
-- <leader\>tT : add global terminal (close is <leader\>tt)
-- <leader\>tl : list all tabpage & global terminal (when choices then open current window)
-
-## LSP
-
-- <leader\>sd : go to Definition (symbol)
-- <leader\>sD : go to Declartion
-- <leader\>sr : go to References
-- <leader\>si : go to Implementation
-- <leader\>dn : next diagnostic
-- <leader\>dp : previous diagnostic
-- <leader\>scn : symbol change name
-
-## Telescope (Fuzzy Finder)
-
-- <leader\>ff : Find Files
-- <leader\>fg : Find string in files
-- <leader\>fb : find open buffers
-- <leader\>fh : find help tags
-
-# Browsing Keyboard base
-
-- <Fn_/\> : Find
-- <>
+- `<Super>{h,j,k,l}` : 창 포커스 이동
+- `<Super>n` / `<Super>p` : 다음 / 이전 창
+- `<Super>q` / `<Super>aq` : 현재 창 닫기 / 전체 창 닫기
+- `<Super>sv` / `<Super>sh` : 수직 / 수평 창 분할
+- `<Super>-` / `<Super>=` : 창 크기 조절
+- `<Super><Ctrl>{h,j,k,l}` : 창 위치 이동

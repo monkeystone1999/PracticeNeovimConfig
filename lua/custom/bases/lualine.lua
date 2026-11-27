@@ -19,7 +19,35 @@ local function macro_recording()
     return "󰑋 Rec @" .. reg
 end
 
--- 3) 현재 버퍼에 연결된 활성 LSP 서버 목록 표시 컴포넌트
+-- 3) CMake 프로젝트일 때 현재 빌드 타입/프리셋 및 선택된 타겟 표시 컴포넌트
+-- (package.loaded만 조회하므로 비 C/C++ 프로젝트에서 cmake-tools를 불필요하게 로드하지 않음)
+local function cmake_component()
+    local cmake = package.loaded["cmake-tools"]
+    if not cmake or not cmake.is_cmake_project() then
+        return ""
+    end
+
+    local mode_label
+    if cmake.has_cmake_preset() then
+        mode_label = cmake.get_configure_preset() or "Preset"
+    else
+        mode_label = cmake.get_build_type() or "NoType"
+    end
+
+    local b_target = cmake.get_build_target()
+    if type(b_target) == "table" then
+        b_target = b_target[1]
+    end
+    b_target = b_target or "all"
+
+    local l_target = cmake.get_launch_target()
+    if l_target and l_target ~= "" then
+        return string.format("󰔷 %s [%s ▶ %s]", mode_label, b_target, l_target)
+    end
+    return string.format("󰔷 %s [%s]", mode_label, b_target)
+end
+
+-- 4) 현재 버퍼에 연결된 활성 LSP 서버 목록 표시 컴포넌트
 local function lsp_clients()
     local clients = vim.lsp.get_clients({ bufnr = 0 })
     if not clients or #clients == 0 then
@@ -47,6 +75,7 @@ function M.get_opts()
             -- dropbar.nvim과 중복되는 기본 "filename"을 제거하고 유용한 상태 정보 배치
             lualine_c = {
                 { workspace_component, color = { gui = "bold" } },
+                { cmake_component, color = { fg = "#4EC9B0" } },
                 { macro_recording, color = { fg = "#ff9e64", gui = "bold" } },
                 "searchcount",
             },

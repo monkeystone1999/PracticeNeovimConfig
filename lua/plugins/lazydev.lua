@@ -15,6 +15,7 @@ return {
         version = "1.*",
         dependencies = {
             "saghen/blink.lib",
+            "rafamadriz/friendly-snippets",
         },
         build = function()
             require("blink.cmp").build():pwait()

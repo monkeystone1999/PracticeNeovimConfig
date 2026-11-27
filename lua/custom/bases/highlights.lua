@@ -141,6 +141,53 @@ local code_highlights = {
     ["@lsp.mod.readonly"]               = { fg = p.const_cyan },
     ["@lsp.typemod.variable.readonly"]  = { fg = p.const_cyan },
     ["@lsp.typemod.property.readonly"]  = { fg = p.const_cyan },
+
+    -- =========================================================================
+    -- 4. 에디터 UI 크롬 (VSCode Dark+ 톤 통일 & 터미널/Neovide 투명 배경 유지)
+    -- =========================================================================
+    -- 선택 영역, 검색 매칭, 괄호 매칭, 커서 줄
+    Visual        = { bg = "#264F78" },
+    Search        = { fg = p.operator_fg, bg = "#613214" },
+    CurSearch     = { fg = "#FFFFFF", bg = "#9E6A03", bold = true },
+    IncSearch     = { fg = "#FFFFFF", bg = "#9E6A03", bold = true },
+    MatchParen    = { fg = "#FFD700", bg = "#3A3D41", bold = true },
+    CursorLine    = { bg = "#2A2D2E" },
+    LineNr        = { fg = "#858585", bg = "NONE" },
+    CursorLineNr  = { fg = "#C6C6C6", bg = "NONE", bold = true },
+    WinSeparator  = { fg = "#3C3C3C", bg = "NONE" },
+
+    -- 플로팅 창 (대시보드/Oil/터미널 등의 투명감은 유지하고 테두리·제목만 정돈)
+    NormalFloat   = { fg = p.operator_fg, bg = "NONE" },
+    FloatBorder   = { fg = "#454545", bg = "NONE" },
+    FloatTitle    = { fg = p.keyword_blue, bg = "NONE", bold = true },
+    FloatFooter   = { fg = "#858585", bg = "NONE" },
+
+    -- 자동완성 팝업 메뉴 (코드와 겹쳐도 가독성이 유지되도록 VSCode 위젯 배경 #252526 사용)
+    Pmenu                  = { fg = "#CCCCCC", bg = "#252526" },
+    PmenuSel               = { fg = "#FFFFFF", bg = "#04395E", bold = true },
+    PmenuSbar              = { bg = "#252526" },
+    PmenuThumb             = { bg = "#4F4F4F" },
+    BlinkCmpMenu           = { fg = "#CCCCCC", bg = "#252526" },
+    BlinkCmpMenuBorder     = { fg = "#454545", bg = "#252526" },
+    BlinkCmpMenuSelection  = { fg = "#FFFFFF", bg = "#04395E", bold = true },
+    BlinkCmpDoc            = { fg = "#CCCCCC", bg = "#252526" },
+    BlinkCmpDocBorder      = { fg = "#454545", bg = "#252526" },
+
+    -- Telescope 테두리 및 매칭 강조
+    TelescopeBorder        = { fg = "#454545", bg = "NONE" },
+    TelescopePromptBorder  = { fg = p.keyword_blue, bg = "NONE" },
+    TelescopeTitle         = { fg = p.keyword_blue, bg = "NONE", bold = true },
+    TelescopeSelection     = { fg = "#FFFFFF", bg = "#04395E", bold = true },
+    TelescopeMatching      = { fg = p.const_cyan, bold = true },
+
+    -- 진단(LSP) 및 GitSigns 거터 색상
+    DiagnosticError = { fg = "#F14C4C" },
+    DiagnosticWarn  = { fg = "#CCA700" },
+    DiagnosticInfo  = { fg = "#3794FF" },
+    DiagnosticHint  = { fg = p.type_teal },
+    GitSignsAdd     = { fg = "#587C0C", bg = "NONE" },
+    GitSignsChange  = { fg = "#1B81A8", bg = "NONE" },
+    GitSignsDelete  = { fg = "#F14C4C", bg = "NONE" },
 }
 
 local function apply_code_highlights()

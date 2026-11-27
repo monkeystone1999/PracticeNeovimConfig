@@ -5,8 +5,8 @@
 
 | 파라미터 | 내용 |
 | --- | --- |
-| event | 이벤트 이름이며 무조건 문자열로 되어있다 |
-| opts | 세부설정을 담은 테이블이며 주로 2가지 키를 사용한다 (pattern = 이벤트를 감지할 파일이름 혹은 특정 확장자, callback = 이벤트 발생시 실행할 함수) | 
+| event | 이벤트 이름 문자열 또는 문자열 배열 테이블 (예: `"LspAttach"`, `{ "BufReadPost", "BufNewFile" }`) |
+| opts | 세부설정을 담은 테이블 (`group` = 중복 등록 방지 그룹, `pattern` = 파일명/파일타입 패턴, `callback` = 실행할 Lua 함수) |
 
 ## 이벤트 종류
 Neovim의 `vim.api.nvim_create_autocmd({event}, {opts})` 함수 첫 번째 매개변수 `{event}`에 사용할 수 있는 주요 오토커맨드 이벤트 종류는 기능과 동작 시점에 따라 다음과 같이 분류됩니다.
@@ -55,4 +55,36 @@ Neovim의 `vim.api.nvim_create_autocmd({event}, {opts})` 함수 첫 번째 매�
 
 ---
 
-## 예시
+## 실제 설정 적용 예시 (`lua/` 내 활용 패턴)
+
+```lua
+-- 1. LSP 서버 연결 시 해당 버퍼에만 단축키 바인딩 (lua/plugins/lsp.lua)
+vim.api.nvim_create_autocmd("LspAttach", {
+    group = vim.api.nvim_create_augroup("UserLspConfig", { clear = true }),
+    callback = function(ev)
+        local opts = { buffer = ev.buf, silent = true }
+        vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+        vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+    end,
+})
+
+-- 2. 보조 유틸리티 창에서 q / <Esc> 로 즉시 닫기 (lua/configs/keymaps.lua)
+vim.api.nvim_create_autocmd("FileType", {
+    group = vim.api.nvim_create_augroup("CloseWithQAndEsc", { clear = true }),
+    pattern = { "help", "qf", "ClangdAST", "ClangdTypeHierarchy", "notify", "lspinfo", "checkhealth", "man" },
+    callback = function(ev)
+        local opts = { buffer = ev.buf, silent = true, nowait = true }
+        vim.keymap.set("n", "q", "<cmd>close<cr>", opts)
+        vim.keymap.set("n", "<Esc>", "<cmd>close<cr>", opts)
+    end,
+})
+
+-- 3. Neovim 종료 직전 현재 활성 워크스페이스의 세션 스냅샷 자동 저장 (lua/custom/bases/workspace.lua)
+vim.api.nvim_create_autocmd("VimLeavePre", {
+    callback = function()
+        if M.current_workspace then
+            M.save_snapshot(M.current_workspace)
+        end
+    end,
+})
+```

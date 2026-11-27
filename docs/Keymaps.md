@@ -74,4 +74,31 @@ vim.keymap.set('n', '<leader>ff', '<Cmd>Telescope find_files<CR>')
 vim.keymap.set('n', '<LT>a', 'echo "pressed <a"')
 ```
 
-## 예시
+## 실제 설정 적용 패턴 (`lua/` 내 활용 예시)
+
+전체 단축키 목록은 [`Usage.md`](./Usage.md)에 정리되어 있으며, 코드에서는 상황에 따라 아래 3가지 패턴을 구분해 사용합니다.
+
+```lua
+-- 1. 버퍼 로컬 키맵 (LspAttach, Gitsigns 등 해당 파일 버퍼에서만 동작해야 할 때)
+vim.keymap.set("n", "<leader>ch", "<cmd>ClangdSwitchSourceHeader<cr>", {
+    buffer = ev.buf,
+    silent = true,
+    desc = "Switch Source/Header (C/C++)",
+})
+
+-- 2. 대기 시간 없는 즉시 반응 키맵 (대시보드/플로팅 터미널 등 전용 UI 창)
+vim.keymap.set({ "t", "n" }, "<Esc>", close_float_term, {
+    buffer = buf,
+    silent = true,
+    nowait = true, -- 다른 복합 키맵과 첫 글자가 겹쳐도 timeoutlen을 기다리지 않고 즉시 실행
+})
+
+-- 3. lazy.nvim 플러그인 스펙의 keys 테이블 (키를 처음 누를 때 플러그인 지연 로드)
+keys = {
+    {
+        "<leader>xx",
+        "<cmd>Trouble diagnostics toggle<cr>",
+        desc = "Trouble: 워크스페이스 전체 에러/경고 목록",
+    },
+}
+```
