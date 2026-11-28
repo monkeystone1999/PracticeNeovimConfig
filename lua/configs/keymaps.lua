@@ -4,13 +4,19 @@
 local float_term = {
     buf = nil,
     win = nil,
+    cwd = nil,
 }
 
-local function get_float_term_config()
+local function get_float_term_config(target_dir)
     local width = math.floor(vim.o.columns * 0.8)
     local height = math.floor((vim.o.lines - vim.o.cmdheight) * 0.8)
     local row = math.floor(((vim.o.lines - vim.o.cmdheight) - height) / 2)
     local col = math.floor((vim.o.columns - width) / 2)
+
+    local title = " Terminal "
+    if target_dir and target_dir ~= "" then
+        title = " Terminal (" .. vim.fn.fnamemodify(target_dir, ":~") .. ") "
+    end
 
     return {
         relative = "editor",
@@ -20,12 +26,37 @@ local function get_float_term_config()
         height = math.max(height, 10),
         style = "minimal",
         border = "rounded",
-        title = " Terminal ",
+        title = title,
         title_pos = "center",
         footer = " <Esc> / [n] q : Close | <C-\\><C-n> : Normal Mode ",
         footer_pos = "center",
         zindex = 60,
     }
+end
+
+local function resolve_term_dir(use_current_file_dir)
+    if use_current_file_dir then
+        -- oil.nvim 버퍼인 경우 oil의 현재 디렉터리 사용
+        if vim.bo.filetype == "oil" then
+            local ok, oil = pcall(require, "oil")
+            if ok then
+                local oil_dir = oil.get_current_dir()
+                if oil_dir and oil_dir ~= "" and vim.fn.isdirectory(oil_dir) == 1 then
+                    return vim.fs.normalize(oil_dir)
+                end
+            end
+        end
+
+        local buf_name = vim.api.nvim_buf_get_name(0)
+        if buf_name ~= "" then
+            local file_dir = vim.fn.fnamemodify(buf_name, ":p:h")
+            if file_dir ~= "" and vim.fn.isdirectory(file_dir) == 1 then
+                return vim.fs.normalize(file_dir)
+            end
+        end
+    end
+
+    return vim.fs.normalize(vim.fn.getcwd(0))
 end
 
 local function close_float_term()
@@ -59,13 +90,7 @@ local function open_float_term(use_current_file_dir)
         return
     end
 
-    local target_dir = vim.fn.getcwd(0)
-    if use_current_file_dir then
-        local file_dir = vim.fn.expand("%:p:h")
-        if file_dir ~= "" and vim.fn.isdirectory(file_dir) == 1 then
-            target_dir = file_dir
-        end
-    end
+    local target_dir = resolve_term_dir(use_current_file_dir)
 
     local need_new_term = use_current_file_dir
         or not float_term.buf
@@ -73,16 +98,22 @@ local function open_float_term(use_current_file_dir)
         or vim.bo[float_term.buf].buftype ~= "terminal"
 
     if need_new_term then
+        -- 기존 숨겨진 터미널 버퍼가 있으면 정리 (좀비 터미널 프로세스 방지)
+        if float_term.buf and vim.api.nvim_buf_is_valid(float_term.buf) then
+            pcall(vim.api.nvim_buf_delete, float_term.buf, { force = true })
+        end
         float_term.buf = vim.api.nvim_create_buf(false, true)
         vim.bo[float_term.buf].bufhidden = "hide"
+        float_term.cwd = target_dir
     end
 
-    float_term.win = vim.api.nvim_open_win(float_term.buf, true, get_float_term_config())
+    float_term.win = vim.api.nvim_open_win(float_term.buf, true, get_float_term_config(float_term.cwd))
 
     if need_new_term then
-        vim.fn.jobstart(vim.o.shell, {
+        vim.fn.jobstart({ vim.o.shell }, {
             term = true,
             cwd = target_dir,
+            env = { PWD = target_dir },
         })
         bind_term_keymaps(float_term.buf)
     end
@@ -95,7 +126,7 @@ vim.api.nvim_create_autocmd("VimResized", {
     group = vim.api.nvim_create_augroup("FloatTermResize", { clear = true }),
     callback = function()
         if float_term.win and vim.api.nvim_win_is_valid(float_term.win) then
-            vim.api.nvim_win_set_config(float_term.win, get_float_term_config())
+            vim.api.nvim_win_set_config(float_term.win, get_float_term_config(float_term.cwd))
         end
     end,
 })

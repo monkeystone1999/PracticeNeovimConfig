@@ -8,6 +8,18 @@ vim.opt.smarttab = true    -- 줄 시작 부분에서 Tab 입력 시 shiftwidth 
 vim.opt.autoindent = true  -- 새 줄을 시작할 때 이전 줄의 들여쓰기를 그대로 유지
 vim.opt.smartindent = true -- C언어 스타일 등의 구문에 맞춰 자동으로 들여쓰기 깊이 조절
 
+-- C/C++ (clangd / clang-format LLVM 기본 2칸 들여쓰기와 일치)
+vim.api.nvim_create_autocmd("FileType", {
+    group = vim.api.nvim_create_augroup("CppIndentTwoSpaces", { clear = true }),
+    pattern = { "c", "cpp", "objc", "objcpp" },
+    callback = function()
+        vim.opt_local.tabstop = 2
+        vim.opt_local.shiftwidth = 2
+        vim.opt_local.softtabstop = 2
+        vim.opt_local.expandtab = true
+    end,
+})
+
 -- ==========================================================================
 -- 2. 화면 및 UI 표시 설정 (UI & Display)
 -- ==========================================================================

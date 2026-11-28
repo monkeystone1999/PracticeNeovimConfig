@@ -17,8 +17,10 @@ return {
         keymaps = {
             ["g?"] = "actions.show_help",
             ["<CR>"] = "actions.select",
-            ["<C-s>"] = "actions.select_vsplit",
-            ["<C-h>"] = "actions.select_split",
+            ["<C-v>"] = { "actions.select", opts = { vertical = true }, desc = "Open in vertical split" },
+            ["<C-x>"] = { "actions.select", opts = { horizontal = true }, desc = "Open in horizontal split" },
+            ["<C-s>"] = false,
+            ["<C-h>"] = false,
             ["<C-t>"] = "actions.select_tab",
             ["<C-p>"] = "actions.preview",
             ["<C-c>"] = "actions.close",
